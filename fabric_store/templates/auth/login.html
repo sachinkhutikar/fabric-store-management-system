@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h2>Customer Login</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" action="{{ url_for('login_post') }}" class="form">
+    <label>Email</label>
+    <input name="email" type="email" required placeholder="you@gmail.com" />
+
+    <label>Password</label>
+    <input id="password" name="password" type="password" required placeholder="••••••••" />
+
+    <div class="flex items-center gap-2 small muted">
+      <input type="checkbox" id="showPwd" onclick="togglePassword()" />
+      <label for="showPwd">Show password</label>
+    </div>
+
+    <button class="btn w-full" type="submit">Login</button>
+    <p class="muted small">No account? <a href="{{ url_for('register') }}">Create one</a></p>
+  </form>
+</div>
+
+<script>
+  function togglePassword() {
+    const p = document.getElementById("password");
+    p.type = p.type === "password" ? "text" : "password";
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Cart{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Your Cart</h1>
+    <p class="muted">Review items and proceed to checkout.</p>
+  </div>
+  <a class="btn" href="{{ url_for('checkout') }}">Checkout</a>
+</div>
+
+<div class="card">
+  {% if not items %}
+    <p class="muted">Cart is empty.</p>
+  {% else %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fabric</th>
+          <th>Customization</th>
+          <th>Length (m)</th>
+          <th>Line</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it, custom, line in items %}
+          {# ✅ safe meters value for comparisons #}
+          {% set meters = (custom.length_m if custom and custom.length_m is not none else 1) %}
+          <tr>
+            <td>
+              <strong>{{ it.name }}</strong><br>
+              <span class="muted small">₹{{ "%.2f"|format(it.price) }} / 1m</span>
+            </td>
+
+            <td class="muted small">
+              Color: {{ custom.color or "-" }}<br>
+              Pattern: {{ custom.pattern or "-" }}<br>
+              Length: {{ meters }} m<br>
+              {% if custom.design_path %}
+                <a href="{{ url_for('static', filename=custom.design_path) }}" target="_blank">Design file</a>
+              {% endif %}
+            </td>
+
+            <td>
+              <form method="post" action="{{ url_for('cart_update', item_id=it.id) }}" class="row">
+                <input
+                  style="width:110px"
+                  name="length_m"
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  value="{{ meters }}"
+                  required
+                >
+                <button class="btn btn-ghost" type="submit">Update</button>
+              </form>
+
+              {% if meters and (meters > it.stock) %}
+                <div class="pill pill-danger">Exceeds stock</div>
+              {% endif %}
+            </td>
+
+            <td>₹{{ "%.2f"|format(line) }}</td>
+
+            <td>
+              <form method="post" action="{{ url_for('cart_remove', item_id=it.id) }}">
+                <button class="btn btn-danger" type="submit">Remove</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="row space">
+      <strong>Subtotal</strong>
+      <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

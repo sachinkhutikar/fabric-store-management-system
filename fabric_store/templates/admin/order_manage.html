@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Manage Order #{{ order.id }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Order #{{ order.id }}</h1>
+    <p class="muted">Customer: {{ order.customer_name }} ({{ order.customer_email }})</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Status Update</h3>
+    <form method="post" action="{{ url_for('admin_update_status', order_id=order.id) }}" class="form">
+      <label>Status</label>
+      <select name="status">
+        {% for s in ORDER_STATUSES %}
+          <option value="{{ s }}" {% if order.order_status==s %}selected{% endif %}>{{ s }}</option>
+        {% endfor %}
+      </select>
+
+      <label>Note (optional)</label>
+      <input name="note" placeholder="e.g. Dispatched via courier">
+
+      <button class="btn" type="submit">Update Status</button>
+    </form>
+
+    <hr class="sep"/>
+    <h3>Timeline</h3>
+    <div class="timeline">
+      {% for h in history %}
+        <div class="titem">
+          <div class="dot"></div>
+          <div>
+            <div class="row space">
+              <strong>{{ h.status }}</strong>
+              <span class="muted small">{{ h.created_at }}</span>
+            </div>
+            {% if h.note %}<div class="muted small">{{ h.note }}</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Payment</h3>
+    {% if payment %}
+      <div class="row space"><span class="muted">Method</span><strong>{{ payment.method }}</strong></div>
+      <div class="row space"><span class="muted">Status</span><strong>{{ payment.status }}</strong></div>
+      <div class="row space"><span class="muted">Txn</span><strong>{{ payment.transaction_id or "-" }}</strong></div>
+      <div class="row space"><span class="muted">Amount</span><strong>₹{{ "%.2f"|format(payment.amount) }}</strong></div>
+    {% else %}
+      <p class="muted">No payment record.</p>
+    {% endif %}
+
+    <hr class="sep"/>
+    <h3>Shipping</h3>
+    <p>
+      <strong>{{ order.shipping_name }}</strong><br>
+      {{ order.shipping_phone }}<br>
+      {{ order.shipping_address }}
+    </p>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Items</h3>
+  <table class="table">
+    <thead><tr><th>Fabric</th><th>Qty</th><th>Unit</th><th>Total</th></tr></thead>
+    <tbody>
+      {% for it in items %}
+        <tr>
+          <td>{{ it.fabric_name_snapshot }}</td>
+          <td>{{ it.quantity }}</td>
+          <td>₹{{ "%.2f"|format(it.unit_price_snapshot) }}</td>
+          <td>₹{{ "%.2f"|format(it.line_total) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

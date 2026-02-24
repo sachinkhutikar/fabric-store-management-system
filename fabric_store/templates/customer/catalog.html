@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Catalog{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Fabric Catalogue</h1>
+    <p class="muted">Search, filter and buy fabrics with customization.</p>
+  </div>
+
+  <form class="searchbar" method="get" action="{{ url_for('catalog') }}">
+    <input name="q" value="{{ q }}" placeholder="Search: cotton, silk, etc..." />
+    <select name="category">
+      <option value="">All Categories</option>
+      {% for c in cats %}
+        <option value="{{ c.category }}" {% if category==c.category %}selected{% endif %}>{{ c.category }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn" type="submit">Search</button>
+  </form>
+</div>
+
+<div class="grid">
+  {% for f in fabrics %}
+    <div class="card product-card">
+      <div class="imgbox">
+        {% if f.image_path %}
+          <img src="{{ url_for('static', filename=f.image_path) }}" alt="{{ f.name }}">
+        {% else %}
+          <div class="placeholder">No image</div>
+        {% endif %}
+      </div>
+
+      <div class="product-meta">
+        <div class="row space">
+          <h3 class="truncate">{{ f.name }}</h3>
+          <span class="price">₹{{ "%.2f"|format(f.price) }}</span>
+        </div>
+        <p class="muted small truncate2">{{ f.description or "—" }}</p>
+        <div class="row space">
+          {% if f.stock < 10 %}
+            <span class="pill pill-danger">Low stock: {{ f.stock }}</span>
+          {% else %}
+            <span class="pill pill-ok">Stock: {{ f.stock }}</span>
+          {% endif %}
+          <a class="btn btn-ghost" href="{{ url_for('fabric_detail', fabric_id=f.id) }}">View</a>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

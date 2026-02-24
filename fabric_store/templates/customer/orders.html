@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}My Orders{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>My Orders</h1>
+    <p class="muted">Track, cancel (before shipping), and view invoices.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th class="right">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in rows %}
+        <tr>
+          <td><strong>#{{ o.id }}</strong></td>
+
+          <td>
+            <span class="pill">{{ STATUS_LABELS.get(o.order_status, o.order_status) }}</span>
+          </td>
+
+          <td>₹{{ "%.2f"|format(o.total_amount) }}</td>
+
+          <td class="muted small">{{ o.created_at }}</td>
+
+          <td class="right" style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+            <a class="btn btn-ghost" href="{{ url_for('order_detail', order_id=o.id) }}">Open</a>
+            <a class="btn btn-ghost" href="{{ url_for('invoice', order_id=o.id) }}">Invoice</a>
+
+            {% if o.order_status in ["ORDER_PLACED", "PROCESSING"] %}
+              <form method="post"
+                    action="{{ url_for('cancle_order', order_id=o.id) }}"
+                    onsubmit="return confirm('Cancel order #{{ o.id }}?');"
+                    style="margin:0;">
+                <input type="hidden" name="reason" value="Cancelled from My Orders page">
+                <button class="btn danger" type="submit">Cancel</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not rows or rows|length == 0 %}
+    <p class="muted" style="margin-top:12px;">No orders yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

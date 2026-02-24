@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Order #{{ order.id }}</h1>
+    <p class="muted">Track status, manage payment, and download invoice.</p>
+  </div>
+
+  <div class="row">
+    <a class="btn btn-ghost" href="{{ url_for('invoice', order_id=order.id) }}">Invoice</a>
+    <a class="btn" href="{{ url_for('track_order', order_id=order.id) }}">Track</a>
+  </div>
+</div>
+
+<div class="two-col">
+  <!-- Timeline -->
+  <div class="card">
+    <h3>Status Timeline</h3>
+
+    <div class="timeline">
+      {% for h in history %}
+        <div class="titem">
+          <div class="dot"></div>
+          <div>
+            <div class="row space">
+              <strong>{{ STATUS_LABELS.get(h.status, h.status) }}</strong>
+              <span class="muted small">{{ h.created_at }}</span>
+            </div>
+            {% if h.note %}
+              <div class="muted small">{{ h.note }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p class="muted">No status updates yet.</p>
+      {% endfor %}
+    </div>
+
+    <div class="pill">
+      Current: <strong>{{ STATUS_LABELS.get(order.order_status, order.order_status) }}</strong>
+    </div>
+
+    {% if order.order_status == 'CANCELLED' %}
+      <div class="pill pill-danger" style="margin-top:10px;">This order has been cancelled.</div>
+    {% endif %}
+  </div>
+
+  <!-- Payment + Cancel -->
+  <div class="card">
+    <h3>Payment</h3>
+
+    {% if payment %}
+      <div class="row space">
+        <span class="muted">Method</span>
+        <strong>{{ payment.method }}</strong>
+      </div>
+
+      <div class="row space">
+        <span class="muted">Status</span>
+        <strong>{{ payment.status }}</strong>
+      </div>
+
+      <div class="row space">
+        <span class="muted">Transaction ID</span>
+        <strong>{{ payment.transaction_id or "-" }}</strong>
+      </div>
+
+      <hr class="sep"/>
+
+      {% if order.order_status != 'CANCELLED' %}
+        <!-- Pay Now section -->
+        {% if payment.status != 'PAID' %}
+          {% if payment.method == 'CARD' %}
+            <div class="muted small">Pay securely using Razorpay.</div>
+            <a class="btn w-full" href="{{ url_for('razorpay_pay', order_id=order.id) }}">Pay Now (Card)</a>
+          {% elif payment.method == 'UPI' %}
+            <div class="muted small">Pay using UPI QR and enter transaction ID.</div>
+            <a class="btn w-full" href="{{ url_for('upi_pay', order_id=order.id) }}">Pay Now (UPI)</a>
+          {% elif payment.method == 'COD' %}
+            <div class="pill pill-ok">Cash on Delivery (Pay at delivery)</div>
+          {% endif %}
+        {% else %}
+          <div class="pill pill-ok">Payment completed ✅</div>
+        {% endif %}
+
+        <!-- Cancel order -->
+        {% if cancellable %}
+          <hr class="sep"/>
+          <h4>Cancel Order</h4>
+          <form method="post" action="{{ url_for('cancle_order', order_id=order.id) }}" class="form"
+                onsubmit="return confirm('Are you sure you want to cancel this order?');">
+            <label>Reason (optional)</label>
+            <input name="reason" placeholder="e.g. Ordered by mistake">
+
+            <button class="btn danger w-full" type="submit">Cancel Order</button>
+            <div class="muted small" style="margin-top:6px;">
+              Cancellation is allowed only before shipping and when payment is not marked as PAID.
+            </div>
+          </form>
+        {% endif %}
+      {% endif %}
+    {% else %}
+      <p class="muted">No payment record found.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Items -->
+<div class="card">
+  <h3>Items</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Fabric</th>
+        <th>Customization</th>
+        <th>Qty</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it, custom in items %}
+        <tr>
+          <td>
+            <strong>{{ it.fabric_name_snapshot }}</strong><br>
+            <span class="muted small">₹{{ "%.2f"|format(it.unit_price_snapshot) }}</span>
+          </td>
+          <td class="muted small">
+            Color: {{ custom.color or "-" }}<br>
+            Pattern: {{ custom.pattern or "-" }}<br>
+            Length: {{ custom.length_m or "-" }} m<br>
+            {% if custom.design_path %}
+              <a href="{{ url_for('static', filename=custom.design_path) }}" target="_blank">Design file</a>
+            {% endif %}
+          </td>
+          <td>{{ it.quantity }}</td>
+          <td>₹{{ "%.2f"|format(it.line_total) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="row space">
+    <span class="muted">Subtotal</span>
+    <strong>₹{{ "%.2f"|format(order.subtotal) }}</strong>
+  </div>
+  <div class="row space">
+    <span class="muted">Discount</span>
+    <strong>- ₹{{ "%.2f"|format(order.discount_amount) }}</strong>
+  </div>
+  <div class="row space">
+    <span class="muted">Total</span>
+    <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Manage Fabrics{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Fabrics</h1>
+    <p class="muted">Manage catalogue, pricing, images, and stock.</p>
+  </div>
+  <a class="btn" href="{{ url_for('admin_fabric_add') }}">+ Add Fabric</a>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in rows %}
+        <tr>
+          <td>{{ f.id }}</td>
+          <td>
+            <strong>{{ f.name }}</strong><br>
+            <span class="muted small">{{ f.category or "-" }}</span>
+          </td>
+          <td>₹{{ "%.2f"|format(f.price) }}</td>
+          <td>
+            {% if f.stock < 10 %}
+              <span class="pill pill-danger">{{ f.stock }}</span>
+            {% else %}
+              <span class="pill pill-ok">{{ f.stock }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if f.is_active %}
+              <span class="pill pill-ok">Active</span>
+            {% else %}
+              <span class="pill">Hidden</span>
+            {% endif %}
+          </td>
+          <td>
+            <a class="btn btn-ghost" href="{{ url_for('admin_fabric_edit', fabric_id=f.id) }}">Edit</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Payment History</h1>
+    <p class="muted">All transactions linked to your orders.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr><th>Order</th><th>Method</th><th>Status</th><th>Txn ID</th><th>Amount</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      {% for p in rows %}
+        <tr>
+          <td>#{{ p.order_id }}</td>
+          <td>{{ p.method }}</td>
+          <td><span class="pill">{{ p.status }}</span></td>
+          <td class="muted small">{{ p.transaction_id or "-" }}</td>
+          <td>₹{{ "%.2f"|format(p.amount) }}</td>
+          <td class="muted small">{{ p.created_at }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

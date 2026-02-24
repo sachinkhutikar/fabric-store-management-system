@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Checkout</h1>
+    <p class="muted">Apply coupon, choose payment method, enter shipping details.</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Order Summary</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th>Length</th>
+          <th>Rate</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it, custom, meters, line_total in items %}
+          <tr>
+            <td>{{ it.name }}</td>
+            <td>{{ "%.2f"|format(meters) }} m</td>
+            <td>₹{{ "%.2f"|format(it.price) }} / 1m</td>
+            <td>₹{{ "%.2f"|format(line_total) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="row space">
+      <strong>Subtotal</strong>
+      <strong>₹{{ "%.2f"|format(subtotal) }}</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Shipping + Payment</h3>
+
+    <form method="post" action="{{ url_for('place_order') }}" class="form">
+      <!-- ✅ Shipping Name mandatory -->
+      <label>Shipping Name</label>
+      <input name="shipping_name" required placeholder="Full name">
+
+      <!-- ✅ Phone: exactly 10 digits -->
+      <label>Phone</label>
+      <input 
+        name="shipping_phone" 
+        type="tel"
+        pattern="[0-9]{10}" 
+        maxlength="10"
+        minlength="10"
+        required 
+        placeholder="10 digit mobile number"
+        title="Phone number must be exactly 10 digits"
+      >
+
+      <!-- ✅ Address mandatory -->
+      <label>Address</label>
+      <textarea 
+        name="shipping_address" 
+        rows="3" 
+        required 
+        placeholder="House no, Street, City, Pincode"
+      ></textarea>
+
+      <label>Coupon code (optional)</label>
+      <input name="coupon_code" placeholder="FESTIVE20">
+
+      <label>Payment method</label>
+      <select name="payment_method" required>
+        <option value="">-- Select Payment Method --</option>
+        <option value="UPI">UPI (Scan QR & Pay)</option>
+        <option value="COD">COD (Cash on Delivery)</option>
+      </select>
+
+      <button class="btn w-full" type="submit">Place Order</button>
+
+      <div class="muted small" style="margin-top:10px;">
+        If you select <strong>UPI</strong>, you will be redirected to a QR page to complete payment.
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

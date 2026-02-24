@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Notifications</h1>
+    <p class="muted">Low stock alerts and system events.</p>
+  </div>
+</div>
+
+<div class="card">
+  {% for n in rows %}
+    <div class="row space">
+      <div>
+        <span class="pill {% if n.type=='LOW_STOCK' %}pill-danger{% endif %}">{{ n.type }}</span>
+        <span class="muted">{{ n.message }}</span>
+        {% if not n.is_read %}
+          <span class="pill pill-danger">NEW</span>
+        {% endif %}
+      </div>
+      <div class="row">
+        <span class="muted small">{{ n.created_at }}</span>
+        <form method="post" action="{{ url_for('admin_notifications_mark_read', notif_id=n.id) }}">
+          <button class="btn btn-ghost" type="submit">Mark read</button>
+        </form>
+      </div>
+    </div>
+    <hr class="sep"/>
+  {% else %}
+    <p class="muted">No notifications.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

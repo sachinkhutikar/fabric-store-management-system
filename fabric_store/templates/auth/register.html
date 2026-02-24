@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h2>Create Account</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="alert {{ category }}">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="post" action="{{ url_for('register_post') }}" class="form" onsubmit="return validateForm()">
+    <label>Name</label>
+    <input name="name" required placeholder="Your name" />
+
+    <label>Email</label>
+    <input name="email" type="email" required placeholder="you@gmail.com" />
+
+    <label>Password</label>
+    <input 
+      id="password"
+      name="password"
+      type="password"
+      required
+      minlength="8"
+      pattern="^(?=.*[^A-Za-z0-9]).{8,}$"
+      placeholder="Create password"
+      title="Password must be at least 8 characters and contain 1 special character"
+    />
+
+    <label>Confirm Password</label>
+    <input 
+      id="confirm_password"
+      type="password"
+      required
+      placeholder="Confirm password"
+    />
+
+    <div class="flex items-center gap-2 small muted">
+      <input type="checkbox" id="showPwd" onclick="togglePassword()" />
+      <label for="showPwd">Show password</label>
+    </div>
+
+    <small class="muted">
+      Password must be at least 8 characters and include 1 special character.
+    </small>
+
+    <p id="pwdError" class="small error-text" style="display:none;"></p>
+
+    <button class="btn w-full" type="submit">Register</button>
+    <p class="muted small">Already have account? <a href="{{ url_for('login') }}">Login</a></p>
+  </form>
+</div>
+
+<script>
+  function togglePassword() {
+    const p1 = document.getElementById("password");
+    const p2 = document.getElementById("confirm_password");
+    const type = p1.type === "password" ? "text" : "password";
+    p1.type = type;
+    p2.type = type;
+  }
+
+  function validateForm() {
+    const pwd = document.getElementById("password").value;
+    const confirmPwd = document.getElementById("confirm_password").value;
+    const errorEl = document.getElementById("pwdError");
+    const regex = /^(?=.*[^A-Za-z0-9]).{8,}$/;
+
+    if (!regex.test(pwd)) {
+      errorEl.textContent = "Password must be at least 8 characters and contain at least 1 special character.";
+      errorEl.style.display = "block";
+      return false;
+    }
+
+    if (pwd !== confirmPwd) {
+      errorEl.textContent = "Passwords do not match.";
+      errorEl.style.display = "block";
+      return false;
+    }
+
+    errorEl.style.display = "none";
+    return true;
+  }
+</script>
+{% endblock %}s
