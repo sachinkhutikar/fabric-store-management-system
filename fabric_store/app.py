@@ -205,10 +205,6 @@ def create_app():
     # -----------------------------
     # Auth
     # -----------------------------
-    @app.route("/")
-    def home():
-        return "Your Flask app is running successfully on Render!"
-
     @app.get("/register")
     def register():
         return render_template("auth/register.html")
