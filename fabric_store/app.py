@@ -24,7 +24,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
 from fabric_store.config import Config
-from db import init_db, get_conn
+from fabric_store.db import init_db, get_conn
 
 
 ALLOWED_IMG = {"png", "jpg", "jpeg", "webp"}
