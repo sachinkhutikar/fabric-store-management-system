@@ -23,7 +23,7 @@ from werkzeug.utils import secure_filename
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
-from config import Config
+from fabric_store.config import Config
 from db import init_db, get_conn
 
 
