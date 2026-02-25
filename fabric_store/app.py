@@ -1425,7 +1425,9 @@ def create_app():
             chart_values=json.dumps(values),
         )
 
-    # Admin Fabrics
+        # Admin Fabrics
+    # -------------------- FABRICS --------------------
+
     @app.get("/admin/fabrics")
     @login_required(role="admin")
     def admin_fabrics():
@@ -1434,10 +1436,12 @@ def create_app():
         conn.close()
         return render_template("admin/fabrics.html", rows=rows)
 
+
     @app.get("/admin/fabrics/add")
     @login_required(role="admin")
     def admin_fabric_add():
         return render_template("admin/fabric_form.html", fabric=None, images=[])
+
 
     @app.post("/admin/fabrics/add")
     @login_required(role="admin")
@@ -1481,6 +1485,7 @@ def create_app():
         flash("Fabric added.", "success")
         return redirect(url_for("admin_fabric_edit", fabric_id=fabric_id))
 
+
     @app.get("/admin/fabrics/edit/<int:fabric_id>")
     @login_required(role="admin")
     def admin_fabric_edit(fabric_id):
@@ -1494,6 +1499,53 @@ def create_app():
         if not f:
             abort(404)
         return render_template("admin/fabric_form.html", fabric=f, images=images)
+
+
+    # ✅ NEW: DELETE FABRIC (also deletes fabric_images + tries to delete files from disk)
+    @app.post("/admin/fabrics/<int:fabric_id>/delete")
+    @login_required(role="admin")
+    def admin_fabric_delete(fabric_id):
+        conn = db()
+
+        # get fabric + related images first (to remove files after DB delete)
+        f = conn.execute(
+            "SELECT id, image_path FROM fabrics WHERE id=?",
+            (fabric_id,),
+        ).fetchone()
+
+        if not f:
+            conn.close()
+            abort(404)
+
+        imgs = conn.execute(
+            "SELECT id, image_path FROM fabric_images WHERE fabric_id=?",
+            (fabric_id,),
+        ).fetchall()
+
+        # delete children then parent
+        conn.execute("DELETE FROM fabric_images WHERE fabric_id=?", (fabric_id,))
+        conn.execute("DELETE FROM fabrics WHERE id=?", (fabric_id,))
+        conn.commit()
+        conn.close()
+
+        # safely remove files (ignore errors)
+        def _safe_remove(rel_path):
+            if not rel_path:
+                return
+            try:
+                abs_path = os.path.join(app.root_path, rel_path)
+                if os.path.exists(abs_path):
+                    os.remove(abs_path)
+            except Exception as e:
+                print("File remove failed:", rel_path, e)
+
+        _safe_remove(f["image_path"])
+        for im in imgs:
+            _safe_remove(im["image_path"])
+
+        flash(f"Fabric #{fabric_id} deleted.", "success")
+        return redirect(url_for("admin_fabrics"))
+
 
     @app.post("/admin/fabrics/edit/<int:fabric_id>")
     @login_required(role="admin")
@@ -1548,6 +1600,22 @@ def create_app():
         flash("Fabric updated.", "success")
         return redirect(url_for("admin_fabric_edit", fabric_id=fabric_id))
 
+
+    # -------------------- ORDERS (FIXED) --------------------
+
+    @app.post("/admin/orders/<int:order_id>/delete")
+    @login_required(role="admin")
+    def admin_order_delete(order_id):
+        conn = db()
+
+        conn.execute("DELETE FROM order_items WHERE order_id = ?", (order_id,))
+        conn.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+
+        conn.commit()
+        conn.close()
+
+        flash(f"Order #{order_id} deleted", "success")
+        return redirect(url_for("admin_orders"))
     # Stock In/Out
     @app.post("/admin/fabrics/<int:fabric_id>/stock-adjust")
     @login_required(role="admin")
