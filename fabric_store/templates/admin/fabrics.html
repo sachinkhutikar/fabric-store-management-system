@@ -13,14 +13,7 @@
 <div class="card">
   <table class="table">
     <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Stock</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
+      <tr><th>ID</th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>
     </thead>
     <tbody>
       {% for f in rows %}
@@ -45,20 +38,8 @@
               <span class="pill">Hidden</span>
             {% endif %}
           </td>
-          <td style="display:flex; gap:8px; flex-wrap:wrap;">
-            <a class="btn btn-ghost" href="{{ url_for('admin_fabric_edit', fabric_id=f.id) }}">
-              Edit
-            </a>
-
-            <!-- ✅ DELETE FABRIC -->
-            <form
-              method="POST"
-              action="{{ url_for('admin_fabric_delete', fabric_id=f.id) }}"
-              onsubmit="return confirm('Delete fabric #{{ f.id }}? This cannot be undone.');"
-              style="display:inline;"
-            >
-              <button type="submit" class="btn btn-danger">Delete</button>
-            </form>
+          <td>
+            <a class="btn btn-ghost" href="{{ url_for('admin_fabric_edit', fabric_id=f.id) }}">Edit</a>
           </td>
         </tr>
       {% endfor %}
