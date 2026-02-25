@@ -295,9 +295,9 @@ def create_app():
     # -----------------------------
     # Customer: Catalog + Fabric detail + Reviews + Gallery + Wishlist
     # -----------------------------
-    @app.get("/")
+    @app.route("/")
     def home():
-        return redirect(url_for("catalog"))
+        return "Your Flask app is working perfectly on Render 🚀"
 
     @app.get("/catalog")
     def catalog():
