@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Track Order{% endblock %}
+{% block content %}
+
+<style>
+  .steps-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap:10px;
+    margin-top: 10px;
+  }
+  .step-card{
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px;
+    text-align:center;
+    background: rgba(255,255,255,0.03);
+  }
+  .step-card.done{
+    background: rgba(0, 200, 120, 0.12);
+  }
+</style>
+
+<div class="card">
+  <h1>Track Order</h1>
+
+  <!-- Search -->
+  <form class="searchbar" method="get" action="{{ url_for('track') }}">
+    <input name="order_id" placeholder="Enter Order ID" value="{{ request.args.get('order_id','') }}">
+    <button class="btn" type="submit">Track</button>
+  </form>
+
+  {% if order %}
+    <hr class="sep"/>
+
+    {% set _labels = STATUS_LABELS|default({}) %}
+    {% set _steps = steps|default([]) %}
+    {% set _pi = progress_index|default(-1) %}
+
+    <div class="row space">
+      <div>
+        <h3 style="margin-bottom:4px;">Order #{{ order.id }}</h3>
+        <div class="muted small">Placed on: {{ order.created_at }}</div>
+      </div>
+
+      {% if order.order_status == 'CANCELLED' %}
+        <span class="pill pill-danger">Cancelled</span>
+      {% else %}
+        <span class="pill">Current: {{ _labels.get(order.order_status, order.order_status) }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Progress Steps -->
+    {% if order.order_status != 'CANCELLED' and _steps|length > 0 %}
+      <div style="margin-top:14px;">
+        <div class="muted small" style="margin-bottom:8px;">Tracking Progress</div>
+
+        <div class="steps-grid">
+          {% for s in _steps %}
+            {% set idx = loop.index0 %}
+            <div class="step-card {% if _pi >= idx %}done{% endif %}">
+              <div style="font-weight:700; font-size:12px; letter-spacing:.2px;">
+                {{ _labels.get(s, s) }}
+              </div>
+              <div class="muted small" style="margin-top:4px;">
+                {% if _pi > idx %}
+                  Completed
+                {% elif _pi == idx %}
+                  Current
+                {% else %}
+                  Pending
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- History Timeline -->
+    <hr class="sep"/>
+    <h3>Status History</h3>
+
+    <div class="timeline">
+      {% for h in history|default([]) %}
+        <div class="titem">
+          <div class="dot"></div>
+          <div>
+            <div class="row space">
+              <strong>{{ _labels.get(h.status, h.status) }}</strong>
+              <span class="muted small">{{ h.created_at }}</span>
+            </div>
+            {% if h.note %}
+              <div class="muted small">{{ h.note }}</div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <p class="muted">No status history found.</p>
+      {% endfor %}
+    </div>
+
+  {% elif request.args.get('order_id') %}
+    <p class="muted">Order not found.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

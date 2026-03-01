@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Coupons{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Coupons</h1>
+    <p class="muted">Create and manage coupon codes.</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Create Coupon</h3>
+    <form method="post" action="{{ url_for('admin_coupons_add') }}" class="form">
+      <label>Code</label>
+      <input name="code" placeholder="FESTIVE20" required>
+
+      <label>Discount %</label>
+      <input name="discount_percent" type="number" min="1" max="90" required>
+
+      <label>Expiry Date (YYYY-MM-DD)</label>
+      <input name="expiry_date" placeholder="2026-12-31" required>
+
+      <label class="row">
+        <input type="checkbox" name="is_active" checked>
+        <span>Active</span>
+      </label>
+
+      <button class="btn" type="submit">Create</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>All Coupons</h3>
+    <table class="table">
+      <thead><tr><th>Code</th><th>%</th><th>Expiry</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for c in rows %}
+          <tr>
+            <td><strong>{{ c.code }}</strong></td>
+            <td>{{ c.discount_percent }}</td>
+            <td class="muted small">{{ c.expiry_date }}</td>
+            <td>
+              {% if c.is_active %}
+                <span class="pill pill-ok">Active</span>
+              {% else %}
+                <span class="pill">Off</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" action="{{ url_for('admin_coupon_toggle', coupon_id=c.id) }}">
+                <button class="btn btn-ghost" type="submit">Toggle</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

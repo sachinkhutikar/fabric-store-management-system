@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Payments{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Payments</h1>
+    <p class="muted">All payment records for your orders.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row space" style="align-items:center;">
+    <h3 style="margin:0;">Payment History</h3>
+    <div class="muted small">
+      {% if current_user and current_user.role == 'admin' %}
+        Showing latest 200 payments (admin view)
+      {% else %}
+        Showing your latest 200 payments
+      {% endif %}
+    </div>
+  </div>
+
+  {% if rows and rows|length > 0 %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th>Txn ID</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th class="right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in rows %}
+          <tr>
+            <td>
+              <strong>#{{ p.order_id }}</strong>
+              <div class="muted small">
+                <a href="{{ url_for('order_detail', order_id=p.order_id) }}">Open order</a>
+                •
+                <a href="{{ url_for('invoice', order_id=p.order_id) }}">Invoice</a>
+              </div>
+            </td>
+
+            <td>{{ p.method or "-" }}</td>
+
+            <td>
+              {% if p.status == "PAID" %}
+                <span class="badge">PAID</span>
+              {% elif p.status == "PENDING" %}
+                <span class="badge">PENDING</span>
+              {% elif p.status == "FAILED" %}
+                <span class="badge">FAILED</span>
+              {% else %}
+                <span class="badge">{{ p.status or "-" }}</span>
+              {% endif %}
+            </td>
+
+            <td class="muted small">
+              {{ p.transaction_id if p.transaction_id else "-" }}
+            </td>
+
+            <td>₹{{ "%.2f"|format(p.amount or 0) }}</td>
+
+            <td class="muted small">
+              {{ p.created_at or "-" }}
+            </td>
+
+            <td class="right">
+              {% if p.method == "UPI" and p.status != "PAID" %}
+                <a class="btn btn-ghost" href="{{ url_for('upi_pay', order_id=p.order_id) }}">Pay (UPI)</a>
+              {% endif %}
+              <a class="btn btn-ghost" href="{{ url_for('invoice_pdf', order_id=p.order_id) }}">PDF</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="muted" style="padding:12px 0;">
+      No payments found.
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

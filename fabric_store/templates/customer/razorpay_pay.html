@@ -1,0 +1,109 @@
+<!-- templates/customer/razorpay_pay.html -->
+{% extends "base.html" %}
+{% block title %}Card Payment - Order #{{ order.id }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Card Payment</h1>
+    <p class="muted">Order #{{ order.id }} • Amount: ₹{{ "%.2f"|format(order.total_amount) }}</p>
+  </div>
+  <div class="row">
+    <a class="btn btn-ghost" href="{{ url_for('order_detail', order_id=order.id) }}">Back to Order</a>
+    <a class="btn" href="{{ url_for('track_order', order_id=order.id) }}">Track</a>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Pay using Razorpay</h3>
+    <p class="muted small">
+      Click the button below to open the secure Razorpay checkout.
+    </p>
+
+    <div class="pill" style="margin:10px 0;">
+      Payable Amount: <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong>
+    </div>
+
+    {% if payment.status == 'PAID' %}
+      <div class="pill pill-ok">Payment already completed ✅</div>
+      <div class="muted small" style="margin-top:8px;">Payment ID: {{ payment.transaction_id or "-" }}</div>
+      <a class="btn w-full" style="margin-top:12px;" href="{{ url_for('order_detail', order_id=order.id) }}">Go to Order</a>
+    {% else %}
+      <button id="payBtn" class="btn w-full" type="button">Pay Now</button>
+
+      <form id="verifyForm" method="post" action="{{ url_for('razorpay_verify', order_id=order.id) }}">
+        <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+        <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+        <input type="hidden" name="razorpay_signature" id="razorpay_signature">
+      </form>
+
+      <div class="muted small" style="margin-top:10px;">
+        If payment succeeds, we’ll verify the signature and mark payment as PAID.
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Order Summary</h3>
+    <div class="row space">
+      <span class="muted">Subtotal</span>
+      <strong>₹{{ "%.2f"|format(order.subtotal) }}</strong>
+    </div>
+    <div class="row space">
+      <span class="muted">Discount</span>
+      <strong>- ₹{{ "%.2f"|format(order.discount_amount) }}</strong>
+    </div>
+    <div class="row space">
+      <span class="muted">Total</span>
+      <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong>
+    </div>
+
+    <hr class="sep"/>
+
+    <div class="muted small">
+      Razorpay Order ID: <strong>{{ payment.provider_order_id }}</strong>
+    </div>
+  </div>
+</div>
+
+{% if payment.status != 'PAID' %}
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    const payBtn = document.getElementById("payBtn");
+    const options = {
+      key: "{{ key_id }}",
+      amount: "{{ (order.total_amount * 100) | int }}",
+      currency: "INR",
+      name: "{{ config.COMPANY_NAME if config and config.COMPANY_NAME else 'FabricStore' }}",
+      description: "Order #{{ order.id }}",
+      order_id: "{{ payment.provider_order_id }}",
+      prefill: {
+        name: "{{ customer_name }}",
+        email: "{{ customer_email }}"
+      },
+      handler: function (response) {
+        document.getElementById("razorpay_payment_id").value = response.razorpay_payment_id;
+        document.getElementById("razorpay_order_id").value = response.razorpay_order_id;
+        document.getElementById("razorpay_signature").value = response.razorpay_signature;
+        document.getElementById("verifyForm").submit();
+      },
+      modal: {
+        ondismiss: function() {
+          // user closed payment modal
+          window.location.href = "{{ url_for('order_detail', order_id=order.id) }}";
+        }
+      },
+      theme: {
+        color: "#0ea5e9"
+      }
+    };
+
+    payBtn && payBtn.addEventListener("click", function () {
+      const rzp = new Razorpay(options);
+      rzp.open();
+    });
+  </script>
+{% endif %}
+
+{% endblock %}

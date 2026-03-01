@@ -1,0 +1,61 @@
+<!-- templates/customer/upi_pay.html -->
+{% extends "base.html" %}
+{% block title %}UPI Payment - Order #{{ order.id }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>UPI Payment</h1>
+    <p class="muted">Order #{{ order.id }} • Amount: ₹{{ "%.2f"|format(order.total_amount) }}</p>
+  </div>
+  <div class="row">
+    <a class="btn btn-ghost" href="{{ url_for('order_detail', order_id=order.id) }}">Back to Order</a>
+    <a class="btn" href="{{ url_for('track_order', order_id=order.id) }}">Track</a>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Scan QR to Pay</h3>
+    <p class="muted small">
+      Open any UPI app (GPay/PhonePe/Paytm) and scan this QR code. After payment, enter your Transaction ID.
+    </p>
+
+    <div style="display:flex; justify-content:center; margin:14px 0;">
+      <div style="max-width:320px; width:100%; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.08);">
+        <img src="{{ url_for('static', filename=qr_path) }}" alt="UPI QR" style="width:100%; display:block;">
+      </div>
+    </div>
+
+    <div class="pill">
+      Payable Amount: <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong>
+    </div>
+
+    <div class="muted small" style="margin-top:10px;">
+      Tip: Transaction ID is usually shown as UTR / Ref No / Transaction ID in your UPI app.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Submit Transaction ID</h3>
+
+    {% if payment.status == 'PAID' %}
+      <div class="pill pill-ok">Payment already marked as PAID ✅</div>
+      <div class="muted small" style="margin-top:8px;">Txn ID: {{ payment.transaction_id or "-" }}</div>
+      <a class="btn w-full" style="margin-top:12px;" href="{{ url_for('order_detail', order_id=order.id) }}">Go to Order</a>
+    {% else %}
+      <form method="post" action="{{ url_for('upi_submit', order_id=order.id) }}" class="form">
+        <label>Transaction ID (UTR/Ref No)</label>
+        <input name="transaction_id" placeholder="e.g. 326781234567" required>
+
+        <button class="btn w-full" type="submit">Mark Payment as Paid</button>
+
+        <div class="muted small" style="margin-top:8px;">
+          Note: In a real system, admin verification is recommended. For your project demo, this marks it PAID.
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

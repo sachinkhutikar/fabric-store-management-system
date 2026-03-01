@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ order.id }}{% endblock %}
+{% block content %}
+
+<div class="card">
+  <div class="row space">
+    <h1>Invoice</h1>
+    <div class="row" style="gap:10px;">
+      
+      <button class="btn btn-ghost" type="button" onclick="window.print()">Print</button>
+    </div>
+  </div>
+
+  <div class="row space">
+    <div>
+      <strong>Invoice for Order #{{ order.id }}</strong><br>
+      <span class="muted small">{{ order.created_at }}</span>
+    </div>
+    <div class="right">
+      <div class="muted small">Payment: {{ payment.method if payment else "-" }}</div>
+      <div class="muted small">Status: {{ payment.status if payment else "-" }}</div>
+      <div class="muted small">Txn: {{ payment.transaction_id if payment and payment.transaction_id else "-" }}</div>
+    </div>
+  </div>
+
+  <hr class="sep"/>
+
+  <h3>Ship To</h3>
+  <p>
+    <strong>{{ order.shipping_name }}</strong><br>
+    {{ order.shipping_phone }}<br>
+    {{ order.shipping_address }}
+  </p>
+
+  <hr class="sep"/>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Customization</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it, custom in items %}
+        <tr>
+          <td>
+            <strong>{{ it.fabric_name_snapshot }}</strong>
+          </td>
+
+          <td class="muted small">
+            Color: {{ custom.color or "-" }}<br>
+            Pattern: {{ custom.pattern or "-" }}<br>
+            Length: {{ custom.length_m or "-" }} m<br>
+            {% if custom.design_path %}
+              <a href="{{ url_for('static', filename=custom.design_path) }}" target="_blank">Design file</a>
+            {% endif %}
+          </td>
+
+          <td>{{ it.quantity }}</td>
+          <td>₹{{ "%.2f"|format(it.unit_price_snapshot) }}</td>
+          <td>₹{{ "%.2f"|format(it.line_total) }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" class="muted">No items found for this order.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <hr class="sep"/>
+
+  <div class="row space">
+    <span class="muted">Subtotal</span>
+    <strong>₹{{ "%.2f"|format(order.subtotal) }}</strong>
+  </div>
+  <div class="row space">
+    <span class="muted">Discount ({{ order.coupon_code or "—" }})</span>
+    <strong>- ₹{{ "%.2f"|format(order.discount_amount) }}</strong>
+  </div>
+  <div class="row space">
+    <span class="muted">Total</span>
+    <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}Fabric Store{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+
+      <!-- ✅ Left section (Back button + Brand) -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        {% if request.endpoint not in ['login', 'register', 'admin_login'] %}
+          <button class="btn btn-ghost" type="button" onclick="history.back()">← Back</button>
+        {% endif %}
+        <a class="brand" href="{{ url_for('catalog') }}">🧵 FabricStore</a>
+      </div>
+
+      <nav class="nav">
+        {% if current_user and current_user.role == 'customer' %}
+          <a href="{{ url_for('catalog') }}">Catalog</a>
+          <a href="{{ url_for('cart') }}">Cart <span class="badge">{{ cart_qty }}</span></a>
+          <a href="{{ url_for('orders') }}">My Orders</a>
+          <a href="{{ url_for('wishlist') }}">Wishlist</a>
+          <a href="{{ url_for('track') }}">Track</a>
+        {% elif current_user and current_user.role == 'admin' %}
+          <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('admin_fabrics') }}">Fabrics</a>
+          <a href="{{ url_for('admin_orders') }}">Orders</a>
+          <a href="{{ url_for('admin_coupons') }}">Coupons</a>
+          <a href="{{ url_for('admin_reviews') }}">Reviews</a>
+          <a href="{{ url_for('admin_notifications') }}">Notifications</a>
+        {% else %}
+          <a href="{{ url_for('catalog') }}">Catalog</a>
+        {% endif %}
+      </nav>
+
+      <div class="actions">
+        {% if current_user %}
+          <span class="muted">Hi, {{ current_user.name }}</span>
+          <a class="btn btn-ghost" href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+          <a class="btn btn-ghost" href="{{ url_for('login') }}">Login</a>
+          <a class="btn" href="{{ url_for('register') }}">Register</a>
+          <a class="btn btn-ghost" href="{{ url_for('admin_login') }}">Admin</a>
+        {% endif %}
+      </div>
+
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-wrap">
+          {% for cat, msg in messages %}
+            <div class="flash flash-{{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container muted">© 2026 Fabric Store • Flask + SQLite</div>
+  </footer>
+</body>
+</html>

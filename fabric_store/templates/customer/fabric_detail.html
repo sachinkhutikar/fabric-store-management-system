@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}{{ fabric.name }}{% endblock %}
+{% block content %}
+
+<div class="two-col">
+  <!-- Left: Main image + Gallery -->
+  <div class="card">
+    <div class="detail-img">
+      {% if fabric.image_path %}
+        <img src="{{ url_for('static', filename=fabric.image_path) }}" alt="{{ fabric.name }}">
+      {% else %}
+        <div class="placeholder big">No image</div>
+      {% endif %}
+    </div>
+
+    {% if images and images|length > 0 %}
+      <hr class="sep"/>
+      <h3 style="margin-top:0;">Gallery</h3>
+
+      <!-- ✅ Updated Gallery: shows style_name under each image -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap:12px;">
+        {% for img in images %}
+          <a href="{{ url_for('static', filename=img.image_path) }}" target="_blank"
+             style="display:block; border-radius:10px; overflow:hidden; text-decoration:none; border:1px solid rgba(255,255,255,0.06);">
+            <img src="{{ url_for('static', filename=img.image_path) }}"
+                 alt="Gallery image"
+                 style="width:100%; height:90px; object-fit:cover; display:block;">
+
+            {% if img.style_name %}
+              <div class="muted small"
+                   style="padding:6px 8px; text-align:center; background:rgba(0,0,0,0.25);">
+                {{ img.style_name }}
+              </div>
+            {% else %}
+              <div class="muted small"
+                   style="padding:6px 8px; text-align:center; background:rgba(0,0,0,0.15);">
+                —
+              </div>
+            {% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Details -->
+  <div class="card">
+    <div class="row space">
+      <div>
+        <h1 style="margin-bottom:4px;">{{ fabric.name }}</h1>
+        <p class="muted" style="margin-top:0;">{{ fabric.category or "—" }}</p>
+      </div>
+
+      {% if current_user and current_user.role=='customer' %}
+        <form method="post"
+              action="{% if wished %}{{ url_for('wishlist_remove', fabric_id=fabric.id) }}{% else %}{{ url_for('wishlist_add', fabric_id=fabric.id) }}{% endif %}">
+          <button class="btn {% if wished %}danger{% endif %}" type="submit">
+            {% if wished %}♥ Wishlisted{% else %}♡ Add Wishlist{% endif %}
+          </button>
+        </form>
+      {% endif %}
+    </div>
+
+    <!-- ✅ Price shows per 1m + live total based on selected length -->
+    <div class="row space" style="align-items:center;">
+      <div>
+        <div class="price big">
+          ₹<span id="unitPrice">{{ "%.2f"|format(fabric.price) }}</span>
+          <span class="muted" style="font-size:14px;"> / 1m</span>
+        </div>
+        <div class="muted small" style="margin-top:4px;">
+          Total for <span id="lenLabel">1</span>m:
+          <strong>₹<span id="totalPrice">{{ "%.2f"|format(fabric.price) }}</span></strong>
+        </div>
+      </div>
+
+      {% if fabric.stock < 10 %}
+        <span class="pill pill-danger">Low stock: {{ fabric.stock }}</span>
+      {% else %}
+        <span class="pill pill-ok">Stock: {{ fabric.stock }}</span>
+      {% endif %}
+    </div>
+
+    <p>{{ fabric.description or "No description." }}</p>
+
+    <div class="ratingbox">
+      <strong>Rating:</strong>
+      <span class="muted">{{ avg.avg_rating or 0 }}/5 ({{ avg.cnt or 0 }} reviews)</span>
+    </div>
+
+    {% if current_user and current_user.role=='customer' %}
+      <hr class="sep"/>
+      <h3>Customize + Add to Cart</h3>
+
+      <form class="form" method="post" action="{{ url_for('cart_add', fabric_id=fabric.id) }}" enctype="multipart/form-data">
+        <!-- ✅ Removed Quantity field -->
+        <div class="row">
+          <div class="col">
+            <label>Length (meters)</label>
+            <input
+              id="lengthInput"
+              name="length_m"
+              type="number"
+              min="1"
+              step="0.5"
+              value="1"
+              required
+              placeholder="e.g. 2"
+              oninput="updateTotal()"
+            />
+            <small class="muted">Total updates automatically.</small>
+          </div>
+        </div>
+
+        <!-- ✅ Keep backend compatible: quantity always 1 -->
+        <input type="hidden" name="quantity" value="1" />
+
+        <div class="row">
+          <div class="col">
+            <label>Color</label>
+            <input name="color" placeholder="e.g. Red" />
+          </div>
+          <div class="col">
+            <label>Pattern</label>
+            <input name="pattern" placeholder="e.g. Floral" />
+          </div>
+        </div>
+
+        <label>Upload design file (png/jpg/pdf)</label>
+        <input name="design_file" type="file" accept=".png,.jpg,.jpeg,.pdf" />
+
+        <button class="btn w-full" type="submit">Add to Cart</button>
+      </form>
+    {% else %}
+      <p class="muted">Login as customer to buy and customize.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reviews</h2>
+
+  <div class="review-list">
+    {% for r in reviews %}
+      <div class="review">
+        <div class="row space">
+          <strong>{{ r.user_name }}</strong>
+          <span class="pill">{{ r.rating }}★</span>
+        </div>
+        <p class="muted small">{{ r.created_at }}</p>
+        <p>{{ r.review_text or "—" }}</p>
+      </div>
+    {% else %}
+      <p class="muted">No reviews yet.</p>
+    {% endfor %}
+  </div>
+
+  {% if current_user and current_user.role=='customer' %}
+    <hr class="sep"/>
+    <h3>Write a review (only after delivered)</h3>
+    <form method="post" action="{{ url_for('add_review', fabric_id=fabric.id) }}" class="form">
+      <label>Rating (1-5)</label>
+      <select name="rating" required>
+        <option value="5">5</option>
+        <option value="4">4</option>
+        <option value="3">3</option>
+        <option value="2">2</option>
+        <option value="1">1</option>
+      </select>
+
+      <label>Review</label>
+      <textarea name="review_text" rows="3" placeholder="Write your review..."></textarea>
+
+      <button class="btn" type="submit">Submit</button>
+    </form>
+  {% endif %}
+</div>
+
+<script>
+  const UNIT_PRICE = parseFloat("{{ '%.2f'|format(fabric.price) }}");
+
+  function updateTotal() {
+    const lenEl = document.getElementById("lengthInput");
+    const lenLabel = document.getElementById("lenLabel");
+    const totalEl = document.getElementById("totalPrice");
+
+    let meters = parseFloat(lenEl.value);
+    if (isNaN(meters) || meters <= 0) meters = 1;
+
+    lenLabel.textContent = meters;
+    totalEl.textContent = (meters * UNIT_PRICE).toFixed(2);
+  }
+
+  document.addEventListener("DOMContentLoaded", updateTotal);
+</script>
+
+{% endblock %}

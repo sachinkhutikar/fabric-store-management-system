@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Admin Dashboard</h1>
+    <p class="muted">Sales analytics, alerts, and quick actions.</p>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="card stat">
+    <div class="muted small">Total Orders</div>
+    <div class="stat-val">{{ total_orders }}</div>
+  </div>
+  <div class="card stat">
+    <div class="muted small">Total Revenue (Paid)</div>
+    <div class="stat-val">₹{{ "%.2f"|format(total_revenue) }}</div>
+  </div>
+  <div class="card stat">
+    <div class="muted small">Most Sold</div>
+    <div class="stat-val">{{ most_sold.fabric_name_snapshot if most_sold else "-" }}</div>
+    <div class="muted small">Qty: {{ most_sold.qty if most_sold else 0 }}</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>Monthly Sales (Paid)</h3>
+    <canvas id="salesChart" height="120"></canvas>
+    <div class="muted small" style="margin-top:8px;">
+      Shows total revenue per month for PAID orders.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Low Stock Alerts</h3>
+    {% if low_stock %}
+      {% for f in low_stock %}
+        <div class="alert alert-danger">
+          <strong>{{ f.name }}</strong>
+          <span class="muted">Stock:</span> {{ f.stock }}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted">No low-stock items.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h3>Recent Notifications</h3>
+  {% for n in notif %}
+    <div class="row space">
+      <div>
+        <span class="pill {% if n.type=='LOW_STOCK' %}pill-danger{% endif %}">{{ n.type }}</span>
+        <span class="muted">{{ n.message }}</span>
+      </div>
+      <span class="muted small">{{ n.created_at }}</span>
+    </div>
+    <hr class="sep"/>
+  {% else %}
+    <p class="muted">No notifications.</p>
+  {% endfor %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<!-- Put JSON in script tags so VS Code JS parser doesn't error on Jinja -->
+<script type="application/json" id="chart-labels">
+  {{ chart_labels|safe }}
+</script>
+
+<script type="application/json" id="chart-values">
+  {{ chart_values|safe }}
+</script>
+
+<script>
+  const labels = JSON.parse(document.getElementById("chart-labels").textContent || "[]");
+  const values = JSON.parse(document.getElementById("chart-values").textContent || "[]");
+
+  const canvas = document.getElementById("salesChart");
+  if (canvas && window.Chart) {
+    const ctx = canvas.getContext("2d");
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Revenue (₹)",
+          data: values,
+          tension: 0.3,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (v) => "₹" + v
+            }
+          }
+        }
+      }
+    });
+  } else {
+    console.warn("Chart.js not loaded or canvas missing");
+  }
+</script>
+
+{% endblock %}

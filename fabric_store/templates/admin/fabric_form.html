@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Fabric Form{% endblock %}
+{% block content %}
+
+<div class="card">
+  <h1>{{ "Edit Fabric" if fabric else "Add Fabric" }}</h1>
+
+  <!-- Main Add/Edit Fabric form -->
+  <form method="post" enctype="multipart/form-data"
+        action="{% if fabric %}{{ url_for('admin_fabric_edit_post', fabric_id=fabric.id) }}{% else %}{{ url_for('admin_fabric_add_post') }}{% endif %}"
+        class="form">
+
+    <label>Name</label>
+    <input name="name" value="{{ fabric.name if fabric else '' }}" required>
+
+    <label>Category</label>
+    <input name="category" value="{{ fabric.category if fabric else '' }}" placeholder="Cotton / Silk / Linen">
+
+    <label>Description</label>
+    <textarea name="description" rows="3">{{ fabric.description if fabric else '' }}</textarea>
+
+    <div class="row">
+      <div class="col">
+        <label>Price (₹)</label>
+        <input name="price" type="number" step="0.01" min="0" value="{{ fabric.price if fabric else '' }}" required>
+      </div>
+      <div class="col">
+        <label>Stock</label>
+        <input name="stock" type="number" min="0" value="{{ fabric.stock if fabric else 0 }}" required>
+      </div>
+    </div>
+
+    <label>Main Image (Thumbnail)</label>
+    <input name="image" type="file" accept=".png,.jpg,.jpeg,.webp">
+
+    {% if fabric and fabric.image_path %}
+      <div class="muted small">
+        Current:
+        <a href="{{ url_for('static', filename=fabric.image_path) }}" target="_blank">View</a>
+      </div>
+    {% endif %}
+
+    <label class="row">
+      <input type="checkbox" name="is_active" {% if not fabric or fabric.is_active %}checked{% endif %}>
+      <span>Active (visible to customers)</span>
+    </label>
+
+    <button class="btn" type="submit">
+      {{ "Update Fabric" if fabric else "Add Fabric" }}
+    </button>
+  </form>
+
+  {% if fabric %}
+    <hr class="sep"/>
+
+    <!-- Stock In/Out -->
+    <h3>Stock In / Out</h3>
+    <form method="post" action="{{ url_for('admin_stock_adjust', fabric_id=fabric.id) }}" class="form">
+      <label>Change Qty (+ add / - remove)</label>
+      <input name="change_qty" type="number" value="0">
+
+      <label>Note (optional)</label>
+      <input name="note" placeholder="e.g. New shipment / damaged items">
+
+      <button class="btn" type="submit">Apply Stock Change</button>
+    </form>
+
+    <hr class="sep"/>
+
+    <!-- Gallery Images -->
+    <h3>Gallery Images</h3>
+    <div class="muted small">
+      Upload multiple images to show fabric from different angles.
+    </div>
+
+    <form method="post" enctype="multipart/form-data"
+          action="{{ url_for('admin_fabric_image_add', fabric_id=fabric.id) }}"
+          class="form">
+
+      <!-- ✅ NEW: Style name -->
+      <label>Style Name (optional)</label>
+      <input name="style_name" placeholder="e.g. Front View / Back View / Close-up / Pattern">
+
+      <label>Upload Images (Multiple)</label>
+      <input name="images" type="file" accept=".png,.jpg,.jpeg,.webp" multiple>
+
+      <button class="btn" type="submit">Upload Images</button>
+    </form>
+
+    {% if images and images|length > 0 %}
+      <div style="margin-top:12px;">
+        <div class="muted small" style="margin-bottom:8px;">Existing gallery images:</div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:12px;">
+          {% for img in images %}
+            <div class="card" style="padding:10px;">
+              <a href="{{ url_for('static', filename=img.image_path) }}" target="_blank">
+                <img src="{{ url_for('static', filename=img.image_path) }}"
+                     alt="Gallery image"
+                     style="width:100%; height:110px; object-fit:cover; border-radius:10px;">
+              </a>
+
+              <!-- ✅ NEW: Show style name if saved -->
+              {% if img.style_name %}
+                <div class="muted small" style="margin-top:6px;">
+                  <strong>Style:</strong> {{ img.style_name }}
+                </div>
+              {% else %}
+                <div class="muted small" style="margin-top:6px;">
+                  <strong>Style:</strong> —
+                </div>
+              {% endif %}
+
+              <form method="post"
+                    action="{{ url_for('admin_fabric_image_delete', image_id=img.id) }}"
+                    style="margin-top:8px;">
+                <button class="btn danger" type="submit" style="width:100%;">Delete</button>
+              </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="muted small" style="margin-top:10px;">No gallery images yet.</div>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+{% endblock %}

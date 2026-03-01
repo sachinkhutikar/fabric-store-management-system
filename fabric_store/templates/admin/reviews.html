@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reviews{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h1>Reviews Moderation</h1>
+    <p class="muted">Delete inappropriate reviews.</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead><tr><th>User</th><th>Fabric</th><th>Rating</th><th>Review</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.user_name }}</td>
+          <td>{{ r.fabric_name }}</td>
+          <td><span class="pill">{{ r.rating }}★</span></td>
+          <td class="muted small">{{ r.review_text or "-" }}</td>
+          <td>
+            {% if r.is_deleted %}
+              <span class="pill">Deleted</span>
+            {% else %}
+              <span class="pill pill-ok">Live</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not r.is_deleted %}
+              <form method="post" action="{{ url_for('admin_review_delete', review_id=r.id) }}">
+                <button class="btn btn-danger" type="submit">Delete</button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

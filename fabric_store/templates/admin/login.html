@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Admin Login{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h2>Admin Login</h2>
+  <form method="post" action="{{ url_for('admin_login_post') }}" class="form">
+    <label>Email</label>
+    <input name="email" type="email" required placeholder="admin@store.com" />
+
+    <label>Password</label>
+    <input name="password" type="password" required placeholder="admin123" />
+
+    <button class="btn w-full" type="submit">Login</button>
+  </form>
+</div>
+{% endblock %}
